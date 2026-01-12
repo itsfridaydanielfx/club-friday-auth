@@ -4,6 +4,9 @@ import fetch from "node-fetch";
 
 const app = express();
 
+console.log("🔥 BUILD MARKER 2026-01-12-2355");
+
+
 /* ===== request logger (ważne) ===== */
 app.use((req, _res, next) => {
   console.log(`➡️ ${req.method} ${req.url}`);
@@ -107,3 +110,4 @@ process.on("SIGTERM", () => {
   console.log("⚠️ Received SIGTERM (Railway stopping container)");
   process.exit(0);
 });
+
