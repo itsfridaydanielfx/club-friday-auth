@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import fetch from "node-fetch";
 
@@ -11,6 +12,12 @@ const REQUIRED_ROLE_ID = process.env.REQUIRED_ROLE_ID;
 const REDIRECT_URI =
   "https://club-friday-auth.up.railway.app/auth/discord/callback";
 
+// 🔹 ENDPOINT TESTOWY
+app.get("/", (req, res) => {
+  res.send("OK");
+});
+
+// 🔹 START OAUTH
 app.get("/auth/discord", (req, res) => {
   const url =
     "https://discord.com/oauth2/authorize" +
@@ -61,11 +68,15 @@ app.get("/auth/discord/callback", async (req, res) => {
         window.close();
       </script>
     `);
-
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.send("❌ Błąd autoryzacji");
   }
 });
 
-app.listen(process.env.PORT || 3000);
-
+// 🔹 LISTEN — NA SAMYM KOŃCU
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("✅ SERVER LISTENING ON PORT", PORT);
+  console.log("CLIENT_ID exists:", !!CLIENT_ID);
+});
