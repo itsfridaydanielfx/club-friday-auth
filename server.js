@@ -9,7 +9,7 @@ const GUILD_ID = process.env.GUILD_ID;
 const REQUIRED_ROLE_ID = process.env.REQUIRED_ROLE_ID;
 
 const REDIRECT_URI =
-  "https://TWOJ-PROJEKT.up.railway.app/auth/discord/callback";
+  "https://club-friday-auth-production.up.railway.app/auth/discord/callback";
 
 app.get("/auth/discord", (req, res) => {
   const url =
@@ -68,3 +68,4 @@ app.get("/auth/discord/callback", async (req, res) => {
 });
 
 app.listen(process.env.PORT || 3000);
+
