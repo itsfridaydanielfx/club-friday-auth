@@ -21,18 +21,16 @@ function requireEnv(name, val) {
     process.exit(1);
   }
 }
-
 requireEnv("CLIENT_ID", CLIENT_ID);
 requireEnv("CLIENT_SECRET", CLIENT_SECRET);
 requireEnv("GUILD_ID", GUILD_ID);
 requireEnv("REQUIRED_ROLE_ID", REQUIRED_ROLE_ID);
 
 /* ===================== HEALTH ===================== */
-app.get("/", (_req, res) => res.send("OK"));
+app.get("/", (_req, res) => res.status(200).send("OK"));
 
 /* ===================== OAUTH START ===================== */
 app.get("/auth/discord", (_req, res) => {
-  // wymagane: identify + guilds.members.read
   const scope = "identify guilds.members.read";
 
   const url =
@@ -67,27 +65,26 @@ app.get("/auth/discord/callback", async (req, res) => {
     const token = await tokenRes.json();
     if (!token?.access_token) {
       console.error("❌ Token response:", token);
-      return res.send("❌ Błąd tokena (brak access_token)");
+      return res.status(500).send("❌ Błąd tokena (brak access_token)");
     }
 
-    // 2) sprawdź członkostwo + role w guild, na tokenie użytkownika (z tego logowania)
+    // 2) check membership + role in guild (na tokenie usera z TEGO logowania)
     const memberRes = await fetch(
       `https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,
       { headers: { Authorization: `Bearer ${token.access_token}` } }
     );
 
     if (!memberRes.ok) {
-      return res.send("❌ Nie jesteś na serwerze");
+      return res.status(403).send("❌ Nie jesteś na serwerze");
     }
 
     const member = await memberRes.json();
-
     if (!member.roles?.includes(REQUIRED_ROLE_ID)) {
-      return res.send("❌ Brak roli Club Friday Tools Access");
+      return res.status(403).send("❌ Brak roli Club Friday Tools Access");
     }
 
-    // 3) Sukces: powiadom Electron i zamknij okno
-    res.send(`
+    // 3) sukces: odblokuj Electron i zamknij okno
+    res.status(200).send(`
       <script>
         window.opener && window.opener.postMessage("DISCORD_OK", "*");
         window.close();
@@ -95,14 +92,21 @@ app.get("/auth/discord/callback", async (req, res) => {
     `);
   } catch (err) {
     console.error(err);
-    res.send("❌ Błąd autoryzacji");
+    res.status(500).send("❌ Błąd autoryzacji");
   }
 });
 
 /* ===================== LISTEN ===================== */
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+// KLUCZOWE: wymuś bind na 0.0.0.0, żeby Railway proxy na pewno widziało port
+app.listen(PORT, "0.0.0.0", () => {
   console.log("✅ SERVER LISTENING ON", PORT);
   console.log("✅ REDIRECT_URI =", REDIRECT_URI);
+});
+
+// pomoże zobaczyć, czy Railway ubija deploy healthcheckiem
+process.on("SIGTERM", () => {
+  console.log("⚠️ Received SIGTERM (Railway stopping container)");
+  process.exit(0);
 });
