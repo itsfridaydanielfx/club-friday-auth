@@ -1,0 +1,13 @@
+{
+  "name": "club-friday-auth",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "node-fetch": "^3.3.2"
+  }
+}
