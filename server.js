@@ -4,16 +4,19 @@ import fetch from "node-fetch";
 
 const app = express();
 
+/* ===== request logger (ważne) ===== */
+app.use((req, _res, next) => {
+  console.log(`➡️ ${req.method} ${req.url}`);
+  next();
+});
+
 /* ===================== ENV ===================== */
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const GUILD_ID = process.env.GUILD_ID;
 const REQUIRED_ROLE_ID = process.env.REQUIRED_ROLE_ID;
-
-// NIE hardcoduj domeny - trzymaj w Railway Variables
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
-/* ===================== HARD FAILS ===================== */
 function requireEnv(name, val) {
   if (!val) {
     console.error(`❌ Missing ENV: ${name}`);
@@ -27,8 +30,9 @@ requireEnv("GUILD_ID", GUILD_ID);
 requireEnv("REQUIRED_ROLE_ID", REQUIRED_ROLE_ID);
 requireEnv("REDIRECT_URI", REDIRECT_URI);
 
-/* ===================== HEALTHCHECK (MUSI BYĆ 200) ===================== */
+/* ===================== HEALTH ===================== */
 app.get("/", (_req, res) => res.status(200).send("OK"));
+app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
 
 /* ===================== OAUTH START ===================== */
 app.get("/auth/discord", (_req, res) => {
@@ -50,7 +54,6 @@ app.get("/auth/discord/callback", async (req, res) => {
     const code = req.query.code;
     if (!code) return res.status(400).send("❌ Brak code");
 
-    // 1) exchange code -> access token
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -64,13 +67,11 @@ app.get("/auth/discord/callback", async (req, res) => {
     });
 
     const token = await tokenRes.json();
-
     if (!token?.access_token) {
       console.error("❌ Token response:", token);
       return res.status(500).send("❌ Błąd tokena (brak access_token)");
     }
 
-    // 2) check membership + roles (na tokenie usera z TEGO logowania)
     const memberRes = await fetch(
       `https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,
       { headers: { Authorization: `Bearer ${token.access_token}` } }
@@ -79,12 +80,10 @@ app.get("/auth/discord/callback", async (req, res) => {
     if (!memberRes.ok) return res.status(403).send("❌ Nie jesteś na serwerze");
 
     const member = await memberRes.json();
-
     if (!member.roles?.includes(REQUIRED_ROLE_ID)) {
       return res.status(403).send("❌ Brak roli Club Friday Tools Access");
     }
 
-    // 3) unlock electron + close
     return res.status(200).send(`
       <script>
         window.opener && window.opener.postMessage("DISCORD_OK", "*");
@@ -99,8 +98,6 @@ app.get("/auth/discord/callback", async (req, res) => {
 
 /* ===================== LISTEN ===================== */
 const PORT = process.env.PORT || 3000;
-
-// ważne dla Railway/proxy
 app.listen(PORT, "0.0.0.0", () => {
   console.log("✅ SERVER LISTENING ON", PORT);
   console.log("✅ REDIRECT_URI =", REDIRECT_URI);
