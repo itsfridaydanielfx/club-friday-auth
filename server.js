@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import fetch from "node-fetch";
-import jwt from "jsonwebtoken";
 
 const app = express();
 
@@ -11,16 +10,9 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const GUILD_ID = process.env.GUILD_ID;
 const REQUIRED_ROLE_ID = process.env.REQUIRED_ROLE_ID;
 
-// możesz dać w Railway Variables, ale jest fallback:
 const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://club-friday-auth.up.railway.app/auth/discord/callback";
-
-// JWT do sesji (MUSI być ustawione w Railway Variables)
-const JWT_SECRET = process.env.JWT_SECRET;
-
-// opcjonalnie: bot do “natychmiastowej” weryfikacji roli przy /session/verify
-const BOT_TOKEN = process.env.BOT_TOKEN;
 
 /* ===================== HARD FAILS ===================== */
 function requireEnv(name, val) {
@@ -34,24 +26,13 @@ requireEnv("CLIENT_ID", CLIENT_ID);
 requireEnv("CLIENT_SECRET", CLIENT_SECRET);
 requireEnv("GUILD_ID", GUILD_ID);
 requireEnv("REQUIRED_ROLE_ID", REQUIRED_ROLE_ID);
-requireEnv("JWT_SECRET", JWT_SECRET);
-
-/* ===================== CORS ===================== */
-// Electron (file://) ma origin "null", więc najprościej dać * dla tego backendu
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
 
 /* ===================== HEALTH ===================== */
 app.get("/", (_req, res) => res.send("OK"));
 
 /* ===================== OAUTH START ===================== */
 app.get("/auth/discord", (_req, res) => {
-  // wymagane scope do pobrania usera + membera w guild
+  // wymagane: identify + guilds.members.read
   const scope = "identify guilds.members.read";
 
   const url =
@@ -89,18 +70,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       return res.send("❌ Błąd tokena (brak access_token)");
     }
 
-    // 2) get user id
-    const meRes = await fetch("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${token.access_token}` }
-    });
-
-    const me = await meRes.json();
-    if (!me?.id) {
-      console.error("❌ /users/@me:", me);
-      return res.send("❌ Nie udało się pobrać usera");
-    }
-
-    // 3) check membership + roles using user OAuth token
+    // 2) sprawdź członkostwo + role w guild, na tokenie użytkownika (z tego logowania)
     const memberRes = await fetch(
       `https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,
       { headers: { Authorization: `Bearer ${token.access_token}` } }
@@ -116,18 +86,10 @@ app.get("/auth/discord/callback", async (req, res) => {
       return res.send("❌ Brak roli Club Friday Tools Access");
     }
 
-    // 4) issue session JWT (Twoja sesja, nie Discord token)
-    const sessionToken = jwt.sign(
-      { uid: me.id },
-      JWT_SECRET,
-      { expiresIn: "7d" } // ustaw jak chcesz
-    );
-
-    // 5) send token back to Electron via postMessage
+    // 3) Sukces: powiadom Electron i zamknij okno
     res.send(`
       <script>
-        const payload = { type: "DISCORD_OK", token: ${JSON.stringify(sessionToken)} };
-        if (window.opener) window.opener.postMessage(payload, "*");
+        window.opener && window.opener.postMessage("DISCORD_OK", "*");
         window.close();
       </script>
     `);
@@ -137,45 +99,10 @@ app.get("/auth/discord/callback", async (req, res) => {
   }
 });
 
-/* ===================== SESSION VERIFY ===================== */
-// Frontend odpytuje to przy starcie i cyklicznie.
-// - Bez BOT_TOKEN: sprawdza tylko ważność JWT
-// - Z BOT_TOKEN: sprawdza też czy user nadal ma rolę
-app.get("/session/verify", async (req, res) => {
-  try {
-    const auth = req.headers.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-    if (!token) return res.status(401).json({ ok: false, reason: "NO_TOKEN" });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const uid = decoded?.uid;
-    if (!uid) return res.status(401).json({ ok: false, reason: "BAD_TOKEN" });
-
-    // natychmiastowa weryfikacja roli (opcjonalnie)
-    if (BOT_TOKEN) {
-      const r = await fetch(
-        `https://discord.com/api/guilds/${GUILD_ID}/members/${uid}`,
-        { headers: { Authorization: `Bot ${BOT_TOKEN}` } }
-      );
-
-      if (!r.ok) return res.status(403).json({ ok: false, reason: "NO_MEMBER" });
-
-      const m = await r.json();
-      const hasRole = m.roles?.includes(REQUIRED_ROLE_ID);
-
-      if (!hasRole) return res.status(403).json({ ok: false, reason: "NO_ROLE" });
-    }
-
-    return res.json({ ok: true });
-  } catch {
-    return res.status(401).json({ ok: false, reason: "EXPIRED_OR_INVALID" });
-  }
-});
-
 /* ===================== LISTEN ===================== */
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log("✅ SERVER LISTENING ON", PORT);
   console.log("✅ REDIRECT_URI =", REDIRECT_URI);
-  console.log("✅ BOT_ROLE_CHECK =", !!BOT_TOKEN);
 });
