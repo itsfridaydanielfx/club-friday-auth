@@ -47,11 +47,8 @@
         document.getElementById("btnGo").href = cfg.oauthUrl;
         const join = document.getElementById("joinLink");
         join.href = cfg.joinServerUrl;
-      } catch (e) {
-        // fallback: nic
-      }
+      } catch (e) {}
 
-      // szybki auto-redirect (ale zostaje przycisk)
       setTimeout(() => {
         const a = document.getElementById("btnGo");
         if (a && a.href && a.href !== "#") window.location.href = a.href;
