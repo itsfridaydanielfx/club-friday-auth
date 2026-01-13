@@ -14,6 +14,10 @@
 
   --shadow:0 24px 70px rgba(0,0,0,.60);
   --r:18px;
+
+  /* ✅ jaśniejszy, spokojny link */
+  --link: rgba(191, 219, 254, 0.92);     /* light blue */
+  --linkHover: rgba(224, 242, 254, 0.95);/* even lighter */
 }
 
 *{ box-sizing:border-box; }
@@ -131,7 +135,6 @@ body{
   background:linear-gradient(180deg, var(--blue), var(--blue2));
   box-shadow:0 10px 22px rgba(88,101,242,.28);
 }
-
 .primary:hover{ filter:brightness(1.05); }
 
 .gold{
@@ -142,7 +145,6 @@ body{
   position:relative;
   overflow:hidden;
 }
-
 .gold::after{
   content:"";
   position:absolute;
@@ -156,12 +158,10 @@ body{
   pointer-events:none;
   will-change:transform;
 }
-
 @keyframes shimmer{
   0%{ transform:translateX(0) rotate(20deg); }
   100%{ transform:translateX(320%) rotate(20deg); }
 }
-
 .gold:hover{ filter:brightness(1.03); }
 
 .smallrow{
@@ -171,12 +171,22 @@ body{
   color:var(--t2);
 }
 
-.smallrow a{
-  color:#93c5fd;
+/* ✅ spokojniejszy kolor linków (żeby nie było “za niebiesko”) */
+.smallrow a,
+.footer a,
+.card a,
+.lead a{
+  color: var(--link);
   text-decoration:none;
-  font-weight:800;
+  font-weight:700;
 }
-.smallrow a:hover{ text-decoration:underline; }
+.smallrow a:hover,
+.footer a:hover,
+.card a:hover,
+.lead a:hover{
+  color: var(--linkHover);
+  text-decoration:underline;
+}
 
 .footer{
   margin-top:14px;
@@ -203,13 +213,9 @@ body{
   gap:10px;
   text-align:center;
 }
-.importantRole .t{
-  text-align:center;
-}
+.importantRole .t{ text-align:center; }
 .importantRole .title{
   font-size:18px;
   letter-spacing:0.2px;
 }
-.importantRole .lead{
-  text-align:center;
-}
+.importantRole .lead{ text-align:center; }
