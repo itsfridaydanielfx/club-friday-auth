@@ -219,3 +219,22 @@ body{
   letter-spacing:0.2px;
 }
 .importantRole .lead{ text-align:center; }
+
+/* ===== FORCE: mniej niebieskie linki (footer + wszędzie) ===== */
+.footer a,
+.card a,
+.lead a,
+.smallrow a{
+  color: rgba(225, 239, 255, 0.92) !important; /* bardzo jasny ice-blue */
+  text-decoration: none !important;
+  font-weight: 700;
+}
+
+.footer a:hover,
+.card a:hover,
+.lead a:hover,
+.smallrow a:hover{
+  color: rgba(241, 248, 255, 0.98) !important;
+  text-decoration: underline !important;
+}
+
