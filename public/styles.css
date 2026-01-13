@@ -59,7 +59,7 @@ body{
   flex:0 0 auto;
 }
 
-.discordLogo{
+.discordLogoWrap{
   width:40px;height:40px;
   border-radius:12px;
   display:grid;place-items:center;
@@ -67,7 +67,14 @@ body{
   border:1px solid rgba(88,101,242,0.22);
   color:var(--white);
   flex:0 0 auto;
-  font-weight:900;
+}
+
+.discordLogoSvg{
+  width:22px;
+  height:22px;
+  display:block;
+  color:var(--white);
+  opacity:0.95;
 }
 
 .t{ line-height:1.1; }
@@ -115,7 +122,7 @@ body{
   user-select:none;
   font-weight:800;
   font-size:14px;
-  line-height:1;
+  line-height:1.1;
   white-space:nowrap;
 }
 
@@ -187,4 +194,22 @@ body{
 
 .singleAction{
   grid-template-columns:1fr !important;
+}
+
+/* ===== IMPORTANT STATE (MISSING ROLE) ===== */
+.importantRole .top{
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+  text-align:center;
+}
+.importantRole .t{
+  text-align:center;
+}
+.importantRole .title{
+  font-size:18px;
+  letter-spacing:0.2px;
+}
+.importantRole .lead{
+  text-align:center;
 }
