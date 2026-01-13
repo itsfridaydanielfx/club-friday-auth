@@ -17,7 +17,6 @@
        data-tag="{{CONTACT_TAG}}"
   >
     <div class="top">
-      <!-- IKONY: jedna linia obok siebie -->
       <div class="iconRow">
         <div class="badge" title="Zabezpieczone logowanie">🔐</div>
 
@@ -75,8 +74,7 @@
     }
 
     function link(href, text){
-      const safeHref = String(href || "");
-      return `<a data-external="1" href="${safeHref}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="${LINK_STYLE}">${text}</a>`;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="${LINK_STYLE}">${text}</a>`;
     }
 
     if (status === "ok") {
@@ -96,14 +94,12 @@
       setTimeout(() => { try { window.close(); } catch(e) {} }, 350);
 
     } else if (code === "MISSING_ROLE") {
-      root.classList.add("importantRole");
-
       msgEl.textContent =
         "Nie masz roli dostępu do aplikacji. Kup dostęp i daj znać, żebym nadał Ci rolę.";
 
       grid.appendChild(card(`⛔ Brak aktywnej roli dostępu do Club Friday Tools.`));
       grid.appendChild(card(
-        `🔑 Odblokuj dostęp przez płatność, a potem napisz do mnie na Instagramie lub na Discordzie, żebym nadał ci rolę na Discordzie i dostęp do aplikacji.`,
+        `🔑 Odblokuj dostęp przez płatność, a potem napisz do mnie na Instagramie lub na Discordzie.`,
         "card muted"
       ));
 
@@ -111,16 +107,13 @@
       const buy = document.createElement("a");
       buy.className = "btn gold";
       buy.href = stripe;
-      // UWAGA: bez target="_blank" -> nie będzie drugiego okna
       buy.rel = "noopener noreferrer";
       buy.referrerPolicy = "no-referrer";
-      buy.setAttribute("data-stripe", "1");
       buy.textContent = "Kup Dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
       actions.appendChild(buy);
 
       footer.innerHTML =
-        `Po zakupie napisz do mnie na Instagramie ${link(ig, tag)} lub na Discordzie <strong>${tag}</strong>. ` +
-        `✅ Po otrzymaniu roli zaloguj się w aplikacji.`;
+        `Po zakupie napisz do mnie na Instagramie ${link(ig, tag)} lub na Discordzie <strong>${tag}</strong>.`;
 
     } else if (code === "NOT_IN_GUILD") {
       grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code}</span>`));
@@ -132,7 +125,6 @@
       a.href = join;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.referrerPolicy = "no-referrer";
       a.textContent = "Dołącz do serwera";
       actions.appendChild(a);
 
@@ -140,7 +132,7 @@
 
     } else {
       grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code || "UNKNOWN"}</span>`));
-      grid.appendChild(card(`Spróbuj ponownie za chwilę albo uruchom logowanie jeszcze raz.`, "card muted"));
+      grid.appendChild(card(`Spróbuj ponownie za chwilę.`, "card muted"));
 
       singleAction();
       const closeBtn = document.createElement("button");
@@ -151,38 +143,6 @@
 
       footer.textContent = "Możesz zamknąć to okno.";
     }
-
-    // ===== Stripe: zawsze otwieraj w oknie 1180x760 (tylko jedno) =====
-    document.addEventListener("click", (e) => {
-      const a = e.target?.closest?.('a[data-stripe="1"]');
-      if (!a) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-
-      const url = a.href;
-      const width = 1180;
-      const height = 760;
-
-      const left = Math.max(0, Math.round((screen.width - width) / 2));
-      const top = Math.max(0, Math.round((screen.height - height) / 2));
-
-      const features = [
-        "popup=yes",
-        "resizable=yes",
-        "scrollbars=yes",
-        "noopener=yes",
-        "noreferrer=yes",
-        `width=${width}`,
-        `height=${height}`,
-        `left=${left}`,
-        `top=${top}`
-      ].join(",");
-
-      const w = window.open(url, "stripeBuyWindow", features);
-      if (!w) window.location.href = url;
-    }, true); // capture=true -> łapiemy klik zanim coś innego go odpali
   </script>
 </body>
 </html>
