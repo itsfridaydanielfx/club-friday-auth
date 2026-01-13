@@ -79,6 +79,28 @@
       return `<a data-external="1" href="${safeHref}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="${LINK_STYLE}">${text}</a>`;
     }
 
+    function openStripePopup(url) {
+      const width = 1180;
+      const height = 760;
+      const left = Math.max(0, Math.round((screen.width - width) / 2));
+      const top = Math.max(0, Math.round((screen.height - height) / 2));
+
+      const features = [
+        "popup=yes",
+        "resizable=yes",
+        "scrollbars=yes",
+        "noopener=yes",
+        "noreferrer=yes",
+        `width=${width}`,
+        `height=${height}`,
+        `left=${left}`,
+        `top=${top}`
+      ].join(",");
+
+      const w = window.open(url, "stripeBuyWindow", features);
+      if (!w) window.location.href = url; // fallback tylko jeśli popup zablokowany
+    }
+
     if (status === "ok") {
       grid.appendChild(card(`✅ Status: <span class="ok">OK</span>`));
       grid.appendChild(card(`Możesz wrócić do aplikacji — to okno zamknie się automatycznie.`, "card muted"));
@@ -107,16 +129,15 @@
         "card muted"
       ));
 
+      // tylko JEDEN przycisk: BUTTON (bez href) => nie ma opcji na 2 okna
       singleAction();
-      const buy = document.createElement("a");
-      buy.className = "btn gold";
-      buy.href = stripe;
-      // UWAGA: bez target="_blank" -> nie będzie drugiego okna
-      buy.rel = "noopener noreferrer";
-      buy.referrerPolicy = "no-referrer";
-      buy.setAttribute("data-stripe", "1");
-      buy.textContent = "Kup Dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
-      actions.appendChild(buy);
+      const buyBtn = document.createElement("button");
+      buyBtn.id = "stripeBuyBtn";
+      buyBtn.type = "button";
+      buyBtn.className = "btn gold";
+      buyBtn.textContent = "Kup Dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
+      buyBtn.onclick = () => openStripePopup(stripe);
+      actions.appendChild(buyBtn);
 
       footer.innerHTML =
         `Po zakupie napisz do mnie na Instagramie ${link(ig, tag)} lub na Discordzie <strong>${tag}</strong>. ` +
@@ -151,38 +172,6 @@
 
       footer.textContent = "Możesz zamknąć to okno.";
     }
-
-    // ===== Stripe: zawsze otwieraj w oknie 1180x760 (tylko jedno) =====
-    document.addEventListener("click", (e) => {
-      const a = e.target?.closest?.('a[data-stripe="1"]');
-      if (!a) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-
-      const url = a.href;
-      const width = 1180;
-      const height = 760;
-
-      const left = Math.max(0, Math.round((screen.width - width) / 2));
-      const top = Math.max(0, Math.round((screen.height - height) / 2));
-
-      const features = [
-        "popup=yes",
-        "resizable=yes",
-        "scrollbars=yes",
-        "noopener=yes",
-        "noreferrer=yes",
-        `width=${width}`,
-        `height=${height}`,
-        `left=${left}`,
-        `top=${top}`
-      ].join(",");
-
-      const w = window.open(url, "stripeBuyWindow", features);
-      if (!w) window.location.href = url;
-    }, true); // capture=true -> łapiemy klik zanim coś innego go odpali
   </script>
 </body>
 </html>
