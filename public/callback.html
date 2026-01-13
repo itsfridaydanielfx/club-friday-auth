@@ -89,10 +89,18 @@
       // IMPORTANT: brak roli
       root.classList.add("importantRole");
 
-      grid.appendChild(card(`⛔ Brak aktywnej roli dostępu do Club Friday Tools.`));
+      grid.appendChild(card(`⛔ Brak roli dostępu`));
       grid.appendChild(card(
-        `Odblokuj dostęp przez płatność, a potem napisz do mnie (IG lub Discord), żebym nadał Ci rolę.`,
+        `✅ Odblokuj rolę przez płatność, a potem napisz do mnie — nadam Ci rolę i dostęp do aplikacji.`,
         "card muted"
+      ));
+
+      grid.appendChild(card(
+        `❓ Jak otrzymać dostęp do aplikacji?<br>` +
+        `1️⃣ Kup dostęp przez Stripe (BLIK / Karta / Revolut): 19,99 zł na 30 dni.<br>` +
+        `2️⃣ Po zakupie napisz do mnie na Instagramie ${tag} lub PW na Discordzie ${tag} - otrzymasz rolę i dostęp do aplikacji.<br>` +
+        `3️⃣ Wróć tutaj i kliknij „Zaloguj przez Discord”.<br>` +
+        `⚡ Po otrzymaniu roli: zaloguj się, a dostęp odblokuje się automatycznie.`
       ));
 
       // tylko JEDEN przycisk: zakup
@@ -102,12 +110,11 @@
       buy.href = stripe;
       buy.target = "_blank";
       buy.rel = "noreferrer";
-      buy.textContent = "Kup dostęp (Stripe / BLIK / karta • 19,99 zł / 30 dni)";
+      buy.textContent = "Kup dostęp (Stripe / BLIK / Karta) • 19,99 zł na 30 dni";
       actions.appendChild(buy);
 
       footer.innerHTML =
-        `Po zakupie napisz do mnie: ${link(ig, tag)} lub na Discordzie <strong>${tag}</strong>. ` +
-        `Po otrzymaniu roli zaloguj się w aplikacji.`;
+        `Kontakt po zakupie: ${link(ig, tag)} lub Discord <strong>${tag}</strong>.`;
 
     } else if (code === "NOT_IN_GUILD") {
       grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code}</span>`));
