@@ -111,7 +111,7 @@
       const buy = document.createElement("a");
       buy.className = "btn gold";
       buy.href = stripe;
-      buy.target = "_blank";
+      // UWAGA: bez target="_blank" -> nie będzie drugiego okna
       buy.rel = "noopener noreferrer";
       buy.referrerPolicy = "no-referrer";
       buy.setAttribute("data-stripe", "1");
@@ -152,18 +152,19 @@
       footer.textContent = "Możesz zamknąć to okno.";
     }
 
-    // ===== Stripe: zawsze otwieraj w oknie 1180x760 =====
+    // ===== Stripe: zawsze otwieraj w oknie 1180x760 (tylko jedno) =====
     document.addEventListener("click", (e) => {
       const a = e.target?.closest?.('a[data-stripe="1"]');
       if (!a) return;
 
       e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
       const url = a.href;
       const width = 1180;
       const height = 760;
 
-      // centrowanie
       const left = Math.max(0, Math.round((screen.width - width) / 2));
       const top = Math.max(0, Math.round((screen.height - height) / 2));
 
@@ -180,10 +181,8 @@
       ].join(",");
 
       const w = window.open(url, "stripeBuyWindow", features);
-
-      // fallback jeśli popup zablokowany
       if (!w) window.location.href = url;
-    });
+    }, true); // capture=true -> łapiemy klik zanim coś innego go odpali
   </script>
 </body>
 </html>
