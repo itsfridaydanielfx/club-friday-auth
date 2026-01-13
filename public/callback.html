@@ -115,7 +115,7 @@
       buy.rel = "noopener noreferrer";
       buy.referrerPolicy = "no-referrer";
       buy.setAttribute("data-stripe", "1");
-      buy.textContent = "Kup dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
+      buy.textContent = "Kup Dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
       actions.appendChild(buy);
 
       footer.innerHTML =
@@ -151,6 +151,39 @@
 
       footer.textContent = "Możesz zamknąć to okno.";
     }
+
+    // ===== Stripe: zawsze otwieraj w oknie 1180x760 =====
+    document.addEventListener("click", (e) => {
+      const a = e.target?.closest?.('a[data-stripe="1"]');
+      if (!a) return;
+
+      e.preventDefault();
+
+      const url = a.href;
+      const width = 1180;
+      const height = 760;
+
+      // centrowanie
+      const left = Math.max(0, Math.round((screen.width - width) / 2));
+      const top = Math.max(0, Math.round((screen.height - height) / 2));
+
+      const features = [
+        "popup=yes",
+        "resizable=yes",
+        "scrollbars=yes",
+        "noopener=yes",
+        "noreferrer=yes",
+        `width=${width}`,
+        `height=${height}`,
+        `left=${left}`,
+        `top=${top}`
+      ].join(",");
+
+      const w = window.open(url, "stripeBuyWindow", features);
+
+      // fallback jeśli popup zablokowany
+      if (!w) window.location.href = url;
+    });
   </script>
 </body>
 </html>
