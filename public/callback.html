@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="/public/styles.css">
+</head>
+<body>
+
+  <div class="box" id="root"
+       data-status="{{STATUS}}"
+       data-code="{{CODE}}"
+       data-stripe="{{STRIPE_URL}}"
+       data-join="{{JOIN_SERVER_URL}}"
+       data-ig="{{IG_URL}}"
+       data-tag="{{CONTACT_TAG}}"
+  >
+    <div class="top">
+      <div class="badge">🔐</div>
+      <div class="discordLogo">Discord</div>
+      <div class="t">
+        <div class="title">{{TITLE}}</div>
+        <div class="sub">@itsfridaydaniel · Club Friday Tools</div>
+      </div>
+    </div>
+
+    <div class="lead" id="msg">{{MESSAGE}}</div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="actions" id="actions" style="margin-top:14px;"></div>
+
+    <div class="footer" id="footer"></div>
+  </div>
+
+  <script>
+    const root = document.getElementById("root");
+    const status = (root.dataset.status || "error").toLowerCase();
+    const code = root.dataset.code || "";
+    const stripe = root.dataset.stripe;
+    const join = root.dataset.join;
+    const ig = root.dataset.ig;
+    const tag = root.dataset.tag;
+
+    const grid = document.getElementById("grid");
+    const actions = document.getElementById("actions");
+    const footer = document.getElementById("footer");
+
+    function card(html, cls="card") {
+      const d = document.createElement("div");
+      d.className = cls;
+      d.innerHTML = html;
+      return d;
+    }
+    function btn(text, href, cls) {
+      const a = document.createElement("a");
+      a.className = "btn " + cls;
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noreferrer";
+      a.textContent = text;
+      return a;
+    }
+    function singleAction() {
+      actions.classList.add("singleAction");
+    }
+
+    if (status === "ok") {
+      grid.appendChild(card(`✅ Status: <span class="ok">OK</span>`));
+      grid.appendChild(card(`Możesz wrócić do aplikacji — to okno zamknie się automatycznie.`, "card muted"));
+
+      singleAction();
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "btn primary";
+      closeBtn.textContent = "Zamknij okno";
+      closeBtn.onclick = () => window.close();
+      actions.appendChild(closeBtn);
+
+      footer.textContent = "@itsfridaydaniel · Club Friday Tools";
+
+      try { window.opener && window.opener.postMessage("DISCORD_OK", "*"); } catch(e) {}
+      setTimeout(() => { try { window.close(); } catch(e) {} }, 350);
+    } else {
+      grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code}</span>`));
+      grid.appendChild(card(`💥 Aplikacja może się wysypać, jeśli strony źródłowe zmienią algorytmy działania.`, "card muted"));
+
+      // CTA zależnie od błędu
+      if (code === "NOT_IN_GUILD") {
+        singleAction();
+        actions.appendChild(btn("Dołącz do serwera", join, "primary"));
+        footer.innerHTML = `Po dołączeniu wróć do aplikacji i kliknij <strong>„Zaloguj przez Discord”</strong>.`;
+      } else if (code === "MISSING_ROLE") {
+        actions.appendChild(btn("Kup dostęp (Stripe / BLIK)", stripe, "gold"));
+        actions.appendChild(btn("Napisz na IG", ig, "primary"));
+        footer.innerHTML =
+          `Po zakupie napisz do mnie na IG lub na Discordzie <strong>${tag}</strong>, żebym nadał rolę.`;
+      } else {
+        singleAction();
+        const retry = document.createElement("button");
+        retry.className = "btn primary";
+        retry.textContent = "Zamknij okno";
+        retry.onclick = () => window.close();
+        actions.appendChild(retry);
+        footer.textContent = "Możesz zamknąć to okno.";
+      }
+    }
+  </script>
+</body>
+</html>

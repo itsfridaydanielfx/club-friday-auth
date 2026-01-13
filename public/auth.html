@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Dostęp przez Discord</title>
+  <link rel="stylesheet" href="/public/styles.css">
+</head>
+<body>
+
+  <div class="box">
+    <div class="top">
+      <div class="badge">🔐</div>
+      <div class="discordLogo">Discord</div>
+      <div class="t">
+        <div class="title">Dostęp przez Discord</div>
+        <div class="sub">@itsfridaydaniel · Club Friday Tools</div>
+      </div>
+    </div>
+
+    <div class="lead" id="lead">
+      Logowanie przez Discord służy jedynie do sprawdzenia Twojej roli na serwerze Club Friday.
+    </div>
+
+    <div class="grid">
+      <div class="card">👤 Uprawnienie: <strong>identify</strong> (identyfikacja konta)</div>
+      <div class="card">🛡️ Uprawnienie: <strong>guilds.members.read</strong> (odczyt ról na serwerze)</div>
+      <div class="card muted">💥 Aplikacja może się wysypać, jeśli strony źródłowe zmienią algorytmy działania.</div>
+    </div>
+
+    <div class="actions singleAction" style="margin-top:14px;">
+      <a class="btn primary" id="btnGo" href="#">Kontynuuj do Discord</a>
+    </div>
+
+    <div class="smallrow">
+      Nie jesteś na serwerze?
+      <a id="joinLink" href="#" target="_blank" rel="noreferrer">Dołącz tutaj!</a>
+    </div>
+
+    <div class="footer">@itsfridaydaniel · Club Friday Tools</div>
+  </div>
+
+  <script>
+    (async () => {
+      try {
+        const cfg = await fetch("/config").then(r => r.json());
+        document.getElementById("btnGo").href = cfg.oauthUrl;
+        const join = document.getElementById("joinLink");
+        join.href = cfg.joinServerUrl;
+      } catch (e) {
+        // fallback: nic
+      }
+
+      // szybki auto-redirect (ale zostaje przycisk)
+      setTimeout(() => {
+        const a = document.getElementById("btnGo");
+        if (a && a.href && a.href !== "#") window.location.href = a.href;
+      }, 900);
+    })();
+  </script>
+</body>
+</html>
