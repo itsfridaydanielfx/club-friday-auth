@@ -57,4 +57,109 @@
     const LINK_STYLE =
       "color: rgba(232, 244, 255, 0.92) !important; " +
       "text-decoration: underline !important; " +
-      "text-underline-o
+      "text-underline-offset: 3px !important; " +
+      "text-decoration-thickness: 1px !important; " +
+      "font-weight: 700 !important;";
+
+    function card(html, cls="card") {
+      const d = document.createElement("div");
+      d.className = cls;
+      d.innerHTML = html;
+      return d;
+    }
+
+    function singleAction() {
+      actions.classList.add("singleAction");
+    }
+
+    // ✅ zawsze otwieraj w nowej karcie/oknie (repo-only)
+    function link(href, text){
+      const safeHref = String(href || "");
+      return `<a data-external="1" href="${safeHref}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="${LINK_STYLE}">${text}</a>`;
+    }
+
+    if (status === "ok") {
+      grid.appendChild(card(`✅ Status: <span class="ok">OK</span>`));
+      grid.appendChild(card(`Możesz wrócić do aplikacji — to okno zamknie się automatycznie.`, "card muted"));
+
+      singleAction();
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "btn primary";
+      closeBtn.textContent = "Zamknij okno";
+      closeBtn.onclick = () => window.close();
+      actions.appendChild(closeBtn);
+
+      footer.textContent = "@itsfridaydaniel · Club Friday Tools";
+
+      try { window.opener && window.opener.postMessage("DISCORD_OK", "*"); } catch(e) {}
+      setTimeout(() => { try { window.close(); } catch(e) {} }, 350);
+
+    } else if (code === "MISSING_ROLE") {
+      root.classList.add("importantRole");
+
+      msgEl.textContent =
+        "Kup dostęp (BLIK / Revolut / Karta), potem napisz do mnie na IG lub Discordzie, żebym nadał rolę.";
+
+      grid.appendChild(card(`⛔ Brak aktywnej roli dostępu do Club Friday Tools.`));
+      grid.appendChild(card(
+        `🔑 Odblokuj dostęp przez płatność, a potem napisz do mnie na Instagramie lub na Discordzie, żebym nadał ci rolę na Discordzie i dostęp do aplikacji.`,
+        "card muted"
+      ));
+
+      singleAction();
+      const buy = document.createElement("a");
+      buy.className = "btn gold";
+      buy.href = stripe;
+      buy.target = "_blank";
+      buy.rel = "noopener noreferrer";
+      buy.referrerPolicy = "no-referrer";
+      buy.textContent = "Kup dostęp (BLIK / Revolut / Karta) • 19,99 zł na 30 dni";
+      actions.appendChild(buy);
+
+      footer.innerHTML =
+        `Po zakupie napisz do mnie na Instagramie ${link(ig, tag)} lub na Discordzie <strong>${tag}</strong>. ` +
+        `✅ Po otrzymaniu roli zaloguj się w aplikacji.`;
+
+    } else if (code === "NOT_IN_GUILD") {
+      grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code}</span>`));
+      grid.appendChild(card(`Nie jesteś na serwerze Club Friday — dołącz i spróbuj ponownie.`, "card muted"));
+
+      singleAction();
+      const a = document.createElement("a");
+      a.className = "btn primary";
+      a.href = join;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.referrerPolicy = "no-referrer";
+      a.textContent = "Dołącz do serwera";
+      actions.appendChild(a);
+
+      footer.innerHTML = `Po dołączeniu wróć do aplikacji i kliknij <strong>„Zaloguj przez Discord”</strong>.`;
+
+    } else {
+      grid.appendChild(card(`❌ Status: <span class="bad">ERROR</span> <span class="mono">${code || "UNKNOWN"}</span>`));
+      grid.appendChild(card(`Spróbuj ponownie za chwilę albo uruchom logowanie jeszcze raz.`, "card muted"));
+
+      singleAction();
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "btn primary";
+      closeBtn.textContent = "Zamknij okno";
+      closeBtn.onclick = () => window.close();
+      actions.appendChild(closeBtn);
+
+      footer.textContent = "Możesz zamknąć to okno.";
+    }
+
+    // ✅ dodatkowe wymuszenie: klik otwiera nową kartę przez window.open (często pomaga w webview)
+    document.addEventListener("click", (e) => {
+      const a = e.target && e.target.closest ? e.target.closest('a[data-external="1"]') : null;
+      if (!a) return;
+      // tylko http/https
+      const url = a.getAttribute("href") || "";
+      if (!/^https?:\/\//i.test(url)) return;
+      e.preventDefault();
+      try { window.open(url, "_blank", "noopener,noreferrer"); } catch(_) {}
+    });
+  </script>
+</body>
+</html>
