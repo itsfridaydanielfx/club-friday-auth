@@ -53,10 +53,12 @@
     const actions = document.getElementById("actions");
     const footer = document.getElementById("footer");
 
-    // ✅ twardy kolor linków inline (przebije każdy CSS i cache)
+    // ✅ kolor linka + PODKREŚLENIE pod nickiem
     const LINK_STYLE =
       "color: rgba(232, 244, 255, 0.92) !important; " +
-      "text-decoration: none !important; " +
+      "text-decoration: underline !important; " +
+      "text-underline-offset: 3px !important; " +
+      "text-decoration-thickness: 1px !important; " +
       "font-weight: 700 !important;";
 
     function card(html, cls="card") {
@@ -70,8 +72,14 @@
       actions.classList.add("singleAction");
     }
 
+    // ✅ w Electronie: klik w link ma iść do normalnej przeglądarki (przez opener)
     function link(href, text){
-      return `<a href="${href}" target="_blank" rel="noreferrer" style="${LINK_STYLE}">${text}</a>`;
+      const safeHref = String(href || "");
+      const isElectron = (navigator.userAgent || "").includes("Electron");
+      const onClick = isElectron
+        ? `onclick="try{ if(window.opener){ window.opener.postMessage({type:'OPEN_EXTERNAL', url:'${safeHref.replace(/'/g,"&#39;")}'}, '*'); } }catch(e){} return false;"`
+        : `target="_blank" rel="noreferrer"`;
+      return `<a href="${safeHref}" style="${LINK_STYLE}" ${onClick}>${text}</a>`;
     }
 
     if (status === "ok") {
@@ -93,7 +101,6 @@
     } else if (code === "MISSING_ROLE") {
       root.classList.add("importantRole");
 
-      // ✅ mała poprawka tekstu u góry (Twoja wersja)
       msgEl.textContent =
         "Kup dostęp (BLIK / Revolut / Karta), potem napisz do mnie na IG lub Discordzie, żebym nadał rolę.";
 
