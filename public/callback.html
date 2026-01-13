@@ -41,6 +41,24 @@
   </div>
 
   <script>
+    // ===== ELECTRON FIX: powiększ okno callback =====
+    try {
+      const isElectron =
+        typeof navigator === "object" &&
+        navigator.userAgent &&
+        navigator.userAgent.toLowerCase().includes("electron");
+
+      if (isElectron) {
+        const W = 1200;
+        const H = 820;
+        window.resizeTo(W, H);
+        window.moveTo(
+          Math.max(0, (screen.width - W) / 2),
+          Math.max(0, (screen.height - H) / 2)
+        );
+      }
+    } catch (e) {}
+
     const root = document.getElementById("root");
     const msgEl = document.getElementById("msg");
 
