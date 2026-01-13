@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readFile } from "fs/promises";
 import fetch from "node-fetch";
 
 const app = express();
@@ -46,6 +47,21 @@ const __dirname = path.dirname(__filename);
 
 app.use("/public", express.static(path.join(__dirname, "public"), { maxAge: "1h" }));
 
+/* ===================== TEMPLATE CACHE ===================== */
+let CALLBACK_TPL = null;
+
+async function loadTemplatesOnce() {
+  try {
+    if (!CALLBACK_TPL) {
+      CALLBACK_TPL = await readFile(path.join(__dirname, "public", "callback.html"), "utf8");
+      console.log("✅ Loaded callback.html template");
+    }
+  } catch (e) {
+    console.error("❌ Failed to load callback.html:", e);
+    process.exit(1);
+  }
+}
+
 /* ===================== HELPERS ===================== */
 function oauthUrl() {
   const scope = "identify guilds.members.read";
@@ -68,13 +84,11 @@ function htmlEscape(s) {
 }
 
 function sendAuthPage(res) {
-  // auth.html pobiera config z /config
   res.sendFile(path.join(__dirname, "public", "auth.html"));
 }
 
 function sendCallbackPage(res, payload) {
-  // callback.html czyta dane z atrybutów data-*
-  // payload: { status, title, message, code, ctaPrimary, ctaSecondary }
+  // payload: { status, title, message, code, ctaPrimaryText, ctaPrimaryHref, ctaSecondaryText, ctaSecondaryHref }
   const {
     status = "error",
     title = "Wystąpił problem",
@@ -86,29 +100,21 @@ function sendCallbackPage(res, payload) {
     ctaSecondaryHref = ""
   } = payload || {};
 
-  // wczytaj plik i podstaw data-* (proste i pewne)
-  const fs = await import("fs/promises");
-  fs.readFile(path.join(__dirname, "public", "callback.html"), "utf8")
-    .then((tpl) => {
-      const out = tpl
-        .replaceAll("{{STATUS}}", htmlEscape(status))
-        .replaceAll("{{TITLE}}", htmlEscape(title))
-        .replaceAll("{{MESSAGE}}", htmlEscape(message))
-        .replaceAll("{{CODE}}", htmlEscape(code || ""))
-        .replaceAll("{{CTA_PRIMARY_TEXT}}", htmlEscape(ctaPrimaryText))
-        .replaceAll("{{CTA_PRIMARY_HREF}}", htmlEscape(ctaPrimaryHref))
-        .replaceAll("{{CTA_SECONDARY_TEXT}}", htmlEscape(ctaSecondaryText))
-        .replaceAll("{{CTA_SECONDARY_HREF}}", htmlEscape(ctaSecondaryHref))
-        .replaceAll("{{JOIN_SERVER_URL}}", htmlEscape(JOIN_SERVER_URL))
-        .replaceAll("{{STRIPE_URL}}", htmlEscape(STRIPE_URL))
-        .replaceAll("{{IG_URL}}", htmlEscape(IG_URL))
-        .replaceAll("{{CONTACT_TAG}}", htmlEscape(CONTACT_TAG));
-      res.status(status === "ok" ? 200 : 403).type("html").send(out);
-    })
-    .catch((e) => {
-      console.error("❌ callback template read error:", e);
-      res.status(500).send("Template error");
-    });
+  const out = CALLBACK_TPL
+    .replaceAll("{{STATUS}}", htmlEscape(status))
+    .replaceAll("{{TITLE}}", htmlEscape(title))
+    .replaceAll("{{MESSAGE}}", htmlEscape(message))
+    .replaceAll("{{CODE}}", htmlEscape(code || ""))
+    .replaceAll("{{CTA_PRIMARY_TEXT}}", htmlEscape(ctaPrimaryText))
+    .replaceAll("{{CTA_PRIMARY_HREF}}", htmlEscape(ctaPrimaryHref))
+    .replaceAll("{{CTA_SECONDARY_TEXT}}", htmlEscape(ctaSecondaryText))
+    .replaceAll("{{CTA_SECONDARY_HREF}}", htmlEscape(ctaSecondaryHref))
+    .replaceAll("{{JOIN_SERVER_URL}}", htmlEscape(JOIN_SERVER_URL))
+    .replaceAll("{{STRIPE_URL}}", htmlEscape(STRIPE_URL))
+    .replaceAll("{{IG_URL}}", htmlEscape(IG_URL))
+    .replaceAll("{{CONTACT_TAG}}", htmlEscape(CONTACT_TAG));
+
+  res.status(status === "ok" ? 200 : 403).type("html").send(out);
 }
 
 /* ===================== HEALTH ===================== */
@@ -131,7 +137,7 @@ app.get("/auth/discord", (_req, res) => {
   sendAuthPage(res);
 });
 
-/* ===================== OAUTH CALLBACK (logic stays same) ===================== */
+/* ===================== OAUTH CALLBACK ===================== */
 app.get("/auth/discord/callback", async (req, res) => {
   try {
     const code = req.query.code;
@@ -177,9 +183,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         status: "error",
         title: "Nie jesteś na serwerze",
         message: "Dołącz na Club Friday i zaloguj się ponownie w aplikacji.",
-        code: "NOT_IN_GUILD",
-        ctaPrimaryText: "Dołącz do serwera",
-        ctaPrimaryHref: JOIN_SERVER_URL
+        code: "NOT_IN_GUILD"
       });
     }
 
@@ -190,11 +194,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         title: "Brak roli dostępu",
         message:
           "Kup dostęp przez Stripe (BLIK), potem napisz do mnie na IG lub Discordzie, żebym nadał rolę.",
-        code: "MISSING_ROLE",
-        ctaPrimaryText: "Kup dostęp (Stripe / BLIK)",
-        ctaPrimaryHref: STRIPE_URL,
-        ctaSecondaryText: "Napisz na IG",
-        ctaSecondaryHref: IG_URL
+        code: "MISSING_ROLE"
       });
     }
 
@@ -216,12 +216,17 @@ app.get("/auth/discord/callback", async (req, res) => {
   }
 });
 
-/* ===================== LISTEN ===================== */
+/* ===================== START SERVER ===================== */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("✅ SERVER LISTENING ON", PORT);
-  console.log("✅ REDIRECT_URI =", REDIRECT_URI);
-});
+
+(async () => {
+  await loadTemplatesOnce();
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log("✅ SERVER LISTENING ON", PORT);
+    console.log("✅ REDIRECT_URI =", REDIRECT_URI);
+  });
+})();
 
 process.on("SIGTERM", () => {
   console.log("⚠️ Received SIGTERM (Railway stopping container)");
